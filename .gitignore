@@ -8,4 +8,5 @@ coverage
 *.tsbuildinfo
 next-env.d.ts
 .data
-_out.txt
+
+.vercel

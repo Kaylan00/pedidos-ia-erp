@@ -59,6 +59,7 @@ Arquivos principais:
 | `src/lib/idempotency.ts` | Chave do lançamento |
 | `src/lib/pipeline.ts` | Fluxo: receber, corrigir, aprovar, lançar |
 | `src/lib/repo/` | Interface do repositório e implementações em memória e Supabase |
+| `src/app/api/[[...rota]]/route.ts` | Toda a API num handler só (ver limitações) |
 | `supabase/migrations/` | Tabelas, índices, RLS e uma view de custo diário |
 | `supabase/functions/extract/` | Edge Function em Deno; importa schema, prompt e preços de `src/lib` |
 
@@ -76,7 +77,7 @@ Arquivos principais:
 
 - Na demo o Bling está em modo sandbox: o payload de `POST /pedidos/vendas` é montado e mostrado, mas não é enviado. O cliente real (OAuth2, renovação de token, 401 com nova tentativa, busca ou criação do contato pelo CNPJ) está implementado e testado com `fetch` falso, não contra uma conta Bling.
 - A demo usa o provedor mock. Ele entende os formatos dos exemplos e variações próximas; texto muito diferente sai incompleto e cai na revisão, que é o comportamento esperado, mas não representa a qualidade do modelo. Os tokens do mock são estimados pelo tamanho do texto e o custo mostrado é o que a chamada custaria no modelo padrão.
-- Os dados da demo ficam na memória da função serverless. Uma instância nova recomeça com os exemplos; um pedido criado em uma instância pode não existir em outra.
+- Os dados da demo ficam na memória da função serverless, e a Vercel troca e multiplica instâncias. Para a demo não quebrar, a API inteira roda num handler só, os exemplos têm id fixo, e o navegador guarda os pedidos que já viu e os reenvia (`POST /api/pedidos/restaurar`) quando a instância não os conhece. É um remendo de demo, desligado com `STORAGE=supabase`. Nesse modo de demo, idempotência e métricas valem por instância, não para o sistema todo.
 - PDF escaneado (imagem) não tem texto selecionável e é recusado; não há OCR.
 - O catálogo de SKUs é estático. Em produção viria de `GET /produtos` do Bling.
 - A Edge Function passou no `deno check`, mas não foi publicada num projeto Supabase.
@@ -90,7 +91,7 @@ Requer Node 20 ou mais novo.
 npm install
 cp .env.example .env.local
 npm run dev          # http://localhost:3000
-npm test             # 72 testes
+npm test             # 75 testes
 ```
 
 Sem nenhuma variável o app sobe com extração mock, Bling sandbox e dados em memória, já com os seis exemplos processados.
@@ -147,4 +148,4 @@ curl localhost:3000/api/metricas
 
 ## Stack
 
-Next.js 15 (App Router), TypeScript, Tailwind CSS 4, zod 4, SDK da Anthropic, unpdf, Supabase (Postgres e Edge Functions em Deno), Vitest. CI no GitHub Actions roda typecheck, lint, testes e build.
+Next.js 15 (App Router), TypeScript, Tailwind CSS 4, zod 4, SDK da Anthropic, unpdf, Supabase (Postgres e Edge Functions em Deno), Vitest.
