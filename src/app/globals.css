@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --color-papel: #fbfbfa;
+  --color-tinta: #1d1d1b;
+  --color-suave: #6b6b66;
+  --color-fio: #e2e1dc;
+  --color-fio-forte: #c9c8c1;
+  --color-destaque: #1f4e5f;
+  --color-alerta: #9a5b00;
+  --color-ok: #2f6b3a;
+  --color-erro: #a3261f;
+  --color-marca: #fff1b8;
+  --color-marca-ativa: #ffd94d;
+}
+
+html {
+  background: var(--color-papel);
+  color: var(--color-tinta);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+}
+.tabela th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--color-suave);
+  border-bottom: 1px solid var(--color-fio-forte);
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+.tabela td {
+  border-bottom: 1px solid var(--color-fio);
+  padding: 7px 10px;
+  vertical-align: top;
+}
+.tabela tr:hover td {
+  background: #f3f3f0;
+}
+.num,
+.tabela .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.campo {
+  width: 100%;
+  border: 1px solid var(--color-fio-forte);
+  background: white;
+  padding: 4px 7px;
+  border-radius: 3px;
+  font: inherit;
+}
+.campo:focus {
+  outline: 2px solid var(--color-destaque);
+  outline-offset: -1px;
+}
+.campo[aria-invalid="true"] {
+  border-color: var(--color-erro);
+}
+
+.botao {
+  border: 1px solid var(--color-tinta);
+  background: var(--color-tinta);
+  color: white;
+  padding: 5px 14px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+.botao:disabled {
+  opacity: 0.5;
+}
+.botao-sec {
+  border: 1px solid var(--color-fio-forte);
+  background: white;
+  color: var(--color-tinta);
+  padding: 5px 14px;
+  border-radius: 3px;
+}
+
+mark {
+  background: var(--color-marca);
+  color: inherit;
+  padding: 0 1px;
+}
+mark[data-ativo="true"] {
+  background: var(--color-marca-ativa);
+}
