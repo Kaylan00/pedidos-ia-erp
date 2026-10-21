@@ -41,13 +41,14 @@ export class ServicoPedidos {
   }
 
   /** Texto entra, pedido sai classificado: pronto (e lançado) ou na fila de revisão. */
-  async receber(texto: string, origem: Origem): Promise<PedidoRegistro> {
+  async receber(texto: string, origem: Origem, opts: { id?: string } = {}): Promise<PedidoRegistro> {
     const r = await this.d.extrair(texto);
     const confianca: Confianca = r.pedido
       ? calcularConfianca(r.pedido, { tentativas: r.tentativas })
       : { score: 0, motivos: [] };
 
     const registro = await this.d.repo.criarPedido({
+      id: opts.id,
       origem,
       texto_original: texto,
       provider: r.provider,

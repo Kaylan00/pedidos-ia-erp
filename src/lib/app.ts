@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { lancadorDoAmbiente } from "./bling/client";
 import { LIMIAR_PADRAO } from "./confidence";
 import { criarExtratorEdge } from "./extract/edge";
@@ -27,9 +28,19 @@ function extrator(): Extrator {
   return (texto) => extrairComValidacao(provedor, texto);
 }
 
+export function limiarDoAmbiente(): number {
+  return Number(process.env.CONFIDENCE_THRESHOLD) || LIMIAR_PADRAO;
+}
+
 export function nomeProvedor(): string {
   if (process.env.EXTRACT_PROVIDER === "edge") return "edge";
   return provedorDoAmbiente().nome;
+}
+
+/** UUID fixo por exemplo, para o link de um exemplo valer em qualquer instância. */
+function idDoExemplo(id: string): string {
+  const h = createHash("sha256").update(`exemplo:${id}`).digest("hex");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-a${h.slice(17, 20)}-${h.slice(20, 32)}`;
 }
 
 type Global = { __servico?: Promise<ServicoPedidos> };
@@ -49,12 +60,12 @@ async function montar(): Promise<ServicoPedidos> {
     repo: repositorio(),
     extrair: extrator(),
     lancador: await lancador(),
-    limiar: Number(process.env.CONFIDENCE_THRESHOLD) || LIMIAR_PADRAO,
+    limiar: limiarDoAmbiente(),
     autoLancar: process.env.AUTO_LANCAR !== "false",
   });
   // Na demo em memória, cada instância nova começa com os exemplos processados.
   if (process.env.STORAGE !== "supabase" && process.env.SEED_DEMO !== "false") {
-    for (const e of [...EXEMPLOS].reverse()) await servico.receber(e.texto, "exemplo");
+    for (const e of [...EXEMPLOS].reverse()) await servico.receber(e.texto, "exemplo", { id: idDoExemplo(e.id) });
   }
   return servico;
 }

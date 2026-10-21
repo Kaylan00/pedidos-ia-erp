@@ -46,7 +46,8 @@ export type Reserva = { ok: true } | { ok: false; existente: Lancamento };
  * com STORAGE=supabase a mesma interface grava no Postgres.
  */
 export interface Repositorio {
-  criarPedido(dados: NovoPedido): Promise<PedidoRegistro>;
+  /** id opcional: os exemplos da demo usam id fixo para ser o mesmo em qualquer instância. */
+  criarPedido(dados: NovoPedido & { id?: string }): Promise<PedidoRegistro>;
   obterPedido(id: string): Promise<PedidoRegistro | null>;
   listarPedidos(filtro?: { status?: StatusPedido }): Promise<PedidoRegistro[]>;
   atualizarPedido(id: string, patch: Partial<NovoPedido>): Promise<PedidoRegistro | null>;
@@ -63,4 +64,11 @@ export interface Repositorio {
   /** Desfaz a reserva quando o Bling falha, para permitir nova tentativa. */
   liberarLancamento(chave: string): Promise<void>;
   obterLancamento(chave: string): Promise<Lancamento | null>;
+
+  /**
+   * Só na memória: recoloca um pedido que o navegador já tinha recebido. Na Vercel
+   * cada instância tem a própria memória; sem isso, abrir ou aprovar um pedido
+   * criado em outra instância daria 404.
+   */
+  restaurar?(registro: PedidoRegistro, lancamento: Lancamento | null): Promise<void>;
 }

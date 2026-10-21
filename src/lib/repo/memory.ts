@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { ChamadaModelo } from "../extract/types";
+import { maisAdiantado } from "../versao";
 import type {
   ChamadaRegistro,
   Lancamento,
@@ -17,8 +18,8 @@ export class RepositorioMemoria implements Repositorio {
   private chamadas: ChamadaRegistro[] = [];
   private lancamentos = new Map<string, Lancamento>();
 
-  async criarPedido(dados: NovoPedido): Promise<PedidoRegistro> {
-    const registro: PedidoRegistro = { ...clone(dados), id: randomUUID(), criado_em: new Date().toISOString() };
+  async criarPedido({ id, ...dados }: NovoPedido & { id?: string }): Promise<PedidoRegistro> {
+    const registro: PedidoRegistro = { ...clone(dados), id: id ?? randomUUID(), criado_em: new Date().toISOString() };
     this.pedidos.set(registro.id, registro);
     return clone(registro);
   }
@@ -79,6 +80,12 @@ export class RepositorioMemoria implements Repositorio {
 
   async liberarLancamento(chave: string) {
     this.lancamentos.delete(chave);
+  }
+
+  async restaurar(registro: PedidoRegistro, lancamento: Lancamento | null) {
+    const atual = this.pedidos.get(registro.id);
+    if (!atual || (maisAdiantado(registro, atual) === registro && registro !== atual)) this.pedidos.set(registro.id, clone(registro));
+    if (lancamento && !this.lancamentos.has(lancamento.chave)) this.lancamentos.set(lancamento.chave, clone(lancamento));
   }
 
   async obterLancamento(chave: string) {

@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { chamar, lembrar } from "@/lib/cliente-api";
 import type { Motivo } from "@/lib/confidence";
 import { reais } from "@/lib/format";
 import { aparece, segmentar, trechosDoPedido } from "@/lib/highlight";
@@ -99,14 +99,20 @@ function paraPedido(r: Rascunho): Pedido {
   };
 }
 
+const json = (corpo: unknown, method: string): RequestInit => ({
+  method,
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(corpo),
+});
+
 interface Props {
   registro: PedidoRegistro;
   lancamento: Lancamento | null;
   limiar: number;
+  onAtualizado: (mensagem: string) => void;
 }
 
-export function Revisao({ registro, lancamento, limiar }: Props) {
-  const router = useRouter();
+export function Revisao({ registro, lancamento, limiar, onAtualizado }: Props) {
   const [rascunho, setRascunho] = useState(() => paraRascunho(registro.pedido));
   const [ativo, setAtivo] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
@@ -138,37 +144,21 @@ export function Revisao({ registro, lancamento, limiar }: Props) {
     disabled: lancado,
   });
 
-  async function salvar(): Promise<boolean> {
-    const resp = await fetch(`/api/pedidos/${registro.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pedido: atual }),
-    });
-    const json = await resp.json().catch(() => null);
-    if (!resp.ok) {
-      setMsg({ tipo: "erro", texto: json?.erro ?? `erro ${resp.status}` });
-      return false;
-    }
-    return true;
-  }
-
   async function acao(aprovar: boolean) {
     setOcupado(true);
     setMsg(null);
     try {
-      if (!(await salvar())) return;
-      if (aprovar) {
-        const resp = await fetch(`/api/pedidos/${registro.id}/aprovar`, { method: "POST" });
-        const json = await resp.json().catch(() => null);
-        if (!resp.ok) {
-          setMsg({ tipo: "erro", texto: json?.erro ?? `erro ${resp.status}` });
-          return;
-        }
-        setMsg({ tipo: "ok", texto: json.duplicado ? "Este pedido já tinha sido lançado; nada foi enviado de novo." : "Pedido lançado." });
-      } else {
-        setMsg({ tipo: "ok", texto: "Correção salva e confiança recalculada." });
+      const resp = aprovar
+        ? await chamar(`/api/pedidos/${registro.id}/aprovar`, json({ pedido: atual }, "POST"), registro.id)
+        : await chamar(`/api/pedidos/${registro.id}`, json({ pedido: atual }, "PATCH"), registro.id);
+      const corpo = await resp.json().catch(() => null);
+      if (!resp.ok) {
+        setMsg({ tipo: "erro", texto: corpo?.erro ?? `erro ${resp.status}` });
+        return;
       }
-      router.refresh();
+      lembrar(corpo.pedido, corpo.lancamento);
+      if (!aprovar) onAtualizado("Correção salva e confiança recalculada.");
+      else onAtualizado(corpo.duplicado ? "Este pedido já tinha sido lançado; nada foi enviado de novo." : "Pedido lançado.");
     } finally {
       setOcupado(false);
     }

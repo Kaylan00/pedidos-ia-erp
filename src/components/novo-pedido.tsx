@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { lembrar } from "@/lib/cliente-api";
 
 interface Props {
   exemplos: { id: string; titulo: string; texto: string }[];
@@ -21,6 +22,7 @@ export function NovoPedido({ exemplos }: Props) {
       setEnviando(false);
       return;
     }
+    lembrar(json.pedido);
     router.push(`/pedidos/${json.pedido.id}`);
   }
 

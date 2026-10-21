@@ -23,7 +23,7 @@ export class RepositorioSupabase implements Repositorio {
     throw new Error(`${contexto}: ${erro?.message ?? "erro desconhecido"}`);
   }
 
-  async criarPedido(dados: NovoPedido): Promise<PedidoRegistro> {
+  async criarPedido(dados: NovoPedido & { id?: string }): Promise<PedidoRegistro> {
     const { data, error } = await this.db.from("pedidos").insert(dados).select().single();
     if (error) this.falhar("criar pedido", error);
     return data as PedidoRegistro;

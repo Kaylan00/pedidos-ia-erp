@@ -122,3 +122,30 @@ describe("fluxo do pedido", () => {
     expect([a.ok, b.ok].sort()).toEqual([false, true]);
   });
 });
+
+describe("restauração da demo em memória", () => {
+  it("recoloca um pedido criado em outra instância e permite aprovar", async () => {
+    const a = montar();
+    const b = montar();
+    const r = await a.servico.receber(texto("mercearia"), "exemplo");
+    expect(await b.repo.obterPedido(r.id)).toBeNull();
+    await b.repo.restaurar!(r, null);
+    const aprovado = await b.servico.aprovar(r.id);
+    expect(aprovado.ok).toBe(true);
+  });
+
+  it("não troca uma cópia lançada por uma mais atrasada", async () => {
+    const { repo, servico } = montar();
+    const r = await servico.receber(texto("bebidas"), "exemplo");
+    expect(r.status).toBe("lancado");
+    await repo.restaurar!({ ...r, status: "revisao" }, null);
+    expect((await repo.obterPedido(r.id))?.status).toBe("lancado");
+  });
+
+  it("aceita id fixo na criação, usado pelos exemplos da demo", async () => {
+    const { repo, servico } = montar();
+    const r = await servico.receber(texto("papelaria"), "exemplo", { id: "00000000-0000-4000-a000-000000000001" });
+    expect(r.id).toBe("00000000-0000-4000-a000-000000000001");
+    expect(await repo.obterPedido(r.id)).not.toBeNull();
+  });
+});
